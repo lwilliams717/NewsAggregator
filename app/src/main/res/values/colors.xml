@@ -8,4 +8,11 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
     <color name="brown">#563c31</color>
+
+    <color name="rainbow1">#954c50</color>
+    <color name="rainbow2">#d68c45</color>
+    <color name="rainbow3">#f4d35e</color>
+    <color name="rainbow4">#709775</color>
+    <color name="rainbow5">#77a0a9</color>
+    <color name="rainbow6">#6c596e</color>
 </resources>
