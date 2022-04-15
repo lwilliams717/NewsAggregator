@@ -161,12 +161,23 @@ public class MainActivity extends AppCompatActivity {
         Toast.makeText(MainActivity.this, R.string.error, Toast.LENGTH_SHORT).show();
     }
 
+    //adds topics to the topics array when called from the downloader
     public static void addTopic(String t){
         topics.add(t);
     }
 
+    //reloads the drawer when the information is pulled from the API
     public void loadDrawer(){
         mDrawerList.setAdapter(new ArrayAdapter<>(this,   // <== Important!
                 R.layout.drawer_layout_item, items));
+    }
+
+    //changes the title of the activity once the information is loaded in
+    public void changeTitle(int num){
+        String temp = new StringBuilder()
+                .append(getString(R.string.app_name))
+                .append(" (").append(num)
+                .append(")").toString();
+        setTitle(temp);
     }
 }

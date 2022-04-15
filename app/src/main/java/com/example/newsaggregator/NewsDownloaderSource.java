@@ -116,6 +116,8 @@ public class NewsDownloaderSource {
             }
             mainActivity.loadDrawer();
             mainActivity.makeMenu();
+            mainActivity.changeTitle(sources.length());
+
         } catch (Exception e) {
             e.printStackTrace();
         }
