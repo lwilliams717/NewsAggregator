@@ -3,6 +3,7 @@ package com.example.newsaggregator;
 import android.content.Intent;
 import android.net.Uri;
 import android.text.method.ScrollingMovementMethod;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Locale;
 
 public class ArticleAdapter extends RecyclerView.Adapter<ArticleViewHolder>{
+    private static final String TAG = "Adapter";
     private final MainActivity main;
     private final ArrayList<Article> articleList;
 
@@ -36,19 +38,28 @@ public class ArticleAdapter extends RecyclerView.Adapter<ArticleViewHolder>{
         Article art = articleList.get(position);
         holder.headline.setText(art.getTitle());
 
-        //formatted time
+        //dateTimeZulu() handles time formatting alr
+        //calling the method just puts that as the date for the view page
         holder.date.setText(art.dateTimeZulu());
 
         holder.author.setText(art.getAuthor());
 
         holder.image.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
 
-        //use Picasso to load the image into the imageView
-        //ADD THE IMAge resources!!!
-        Picasso.get().load(art.getUrlToImage()).placeholder(R.drawable.noimage).error(R.drawable.brokenimage).into(holder.image);
+        //Picasso!
+        //Picasso.get().setLoggingEnabled(true);
+
+        //Log.d(TAG, "onBindViewHolder: " + art.getUrlToImage());
+
+        Picasso.get().load(art.getUrlToImage().replace("http:", "https:"))
+                .placeholder(R.drawable.noimage)
+                .error(R.drawable.brokenimage)
+                .into(holder.image);
+
         //onclick listener for the picture
         holder.image.setOnClickListener(var -> imageClick(art.getUrl()));
 
+        //sets the scrolling method so the description is scrollable
         holder.articleContent.setMovementMethod(new ScrollingMovementMethod());
 
         holder.articleContent.setText(art.getDesc());

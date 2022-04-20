@@ -8,7 +8,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 
 public class Article {
-    private String newsName;
+    private final String newsName;
     private String author;
     private String title;
     private String desc;
@@ -67,11 +67,16 @@ public class Article {
     }
 
     public void setTitle(String title) {
-        this.title = title;
+        if(title.equals("null") || title.isEmpty()){
+            this.title = "No title available";
+        }
+        else{
+            this.title = title;
+        }
     }
 
     public void setDesc(String desc) {
-        if(author.equals("null")){
+        if(desc.equals("null") || desc.isEmpty()){
             this.desc = "No description available";
         }
         else{

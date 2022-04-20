@@ -27,7 +27,7 @@ public class NewsDownloader {
                 response -> parseJSON_Main(response.toString());
 
         Response.ErrorListener error =
-                error1 -> mainActivity.updateData(null);
+                error1 -> mainActivity.ErrorDownload();
 
         // Request a string response from the provided URL.
         JsonObjectRequest jsonObjectRequest =

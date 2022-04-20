@@ -49,6 +49,7 @@ public class MainActivity extends AppCompatActivity {
     private  ArrayList<Article> article = new ArrayList<>();
     private String [] colors = {"#ad152e", "#d68c45", "#f4d35e", "#60785c", "#77a0a9", "#6c596e", "#ff8c9f"};
     String currentTitle;
+    boolean network;
 
 
     @Override
@@ -58,6 +59,8 @@ public class MainActivity extends AppCompatActivity {
 
         mDrawerLayout = findViewById(R.id.drawer_layout); // <== Important!
         mDrawerList = findViewById(R.id.drawer_list); // <== Important!
+        network = hasInternet();
+
 
         mDrawerList.setAdapter(new ArrayAdapter<>(this,   // <== Important!
                 R.layout.drawer_layout_item, all_items));
@@ -92,7 +95,12 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         this.menu = menu;
-        NewsDownloaderSource.NewsDownloaderTopics(this);
+        if (network){
+            NewsDownloaderSource.NewsDownloaderTopics(this);
+        }
+        else{
+            ErrorNetwork();
+        }
 
         return super.onCreateOptionsMenu(menu);
     }
@@ -194,21 +202,27 @@ public class MainActivity extends AppCompatActivity {
 
     @SuppressLint("NotifyDataSetChanged")
     private void selectItem(int position) {
-        viewPager.setBackground(null);
-        //grab the title
-        currentTitle = current_items.get(position).getName();
-        NewsDownloaderArticle news2 = new NewsDownloaderArticle(this, current_items.get(position).getId());
-        new Thread(news2).start();
+        if(network){
+            viewPager.setBackground(null);
+            //grab the title
+            currentTitle = current_items.get(position).getName();
+            NewsDownloaderArticle news2 = new NewsDownloaderArticle(this, current_items.get(position).getId());
+            new Thread(news2).start();
+        }
+        else{
+            ErrorNetwork();
+        }
 
         mDrawerLayout.closeDrawer(mDrawerList);
-    }
-
-    public void updateData(Object o) {
     }
 
     //method for when the downloader throws an error
     public void ErrorDownload() {
         Toast.makeText(MainActivity.this, R.string.error, Toast.LENGTH_SHORT).show();
+    }
+    //error method for internet
+    public void ErrorNetwork(){
+        Toast.makeText(MainActivity.this, R.string.no_network, Toast.LENGTH_SHORT).show();
     }
 
     //adds topics to the topics array when called from the downloader
@@ -228,6 +242,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     //changes the title of the activity once the information is loaded in
+    //this method is specifically for when the number of topics have been created
     public void changeTitle(int num){
         String temp = new StringBuilder()
                 .append(getString(R.string.app_name))
@@ -236,6 +251,7 @@ public class MainActivity extends AppCompatActivity {
         setTitle(temp);
     }
     //changes the title when the user pulls up a view page
+    //this changes the name to the publication in use
     public void changeTitle(String title){
         setTitle(title);
     }
