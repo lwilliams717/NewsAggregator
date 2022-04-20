@@ -4,10 +4,17 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.viewpager2.widget.ViewPager2;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.res.Configuration;
+import android.graphics.Color;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
+import android.text.SpannableString;
+import android.text.style.ForegroundColorSpan;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -28,26 +35,39 @@ import java.util.Set;
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "MainActivity";
+    private static TextView drawerText;
     private DrawerLayout mDrawerLayout;
     private ListView mDrawerList;
     private TextView textView;
+    private ViewPager2 viewPager;
     private ActionBarDrawerToggle mDrawerToggle;
-    static final ArrayList<NewsSource> items = new ArrayList<>();
+    static final ArrayList<NewsSource> all_items = new ArrayList<>();
+    static final ArrayList<NewsSource> current_items = new ArrayList<>();
     private Menu menu;
+    private ArticleAdapter artadap;
     static final ArrayList<String> topics = new ArrayList<>();
+    private  ArrayList<Article> article = new ArrayList<>();
+    private String [] colors = {"#ad152e", "#d68c45", "#f4d35e", "#60785c", "#77a0a9", "#6c596e", "#ff8c9f"};
+    String currentTitle;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-
-
         mDrawerLayout = findViewById(R.id.drawer_layout); // <== Important!
         mDrawerList = findViewById(R.id.drawer_list); // <== Important!
 
         mDrawerList.setAdapter(new ArrayAdapter<>(this,   // <== Important!
-                R.layout.drawer_layout_item, items));
+                R.layout.drawer_layout_item, all_items));
+
+        mDrawerList.setOnItemClickListener(
+                (parent, view, position, id) -> {
+                    selectItem(position);
+                    mDrawerLayout.closeDrawer(mDrawerList);
+                }
+        );
 
         mDrawerToggle = new ActionBarDrawerToggle(   // <== Important!
                 this,                /* host Activity */
@@ -62,6 +82,9 @@ public class MainActivity extends AppCompatActivity {
         }
 
         //makeMenu();
+        artadap = new ArticleAdapter(this,article);
+        viewPager = findViewById(R.id.view_pager);
+        viewPager.setAdapter(artadap);
 
     }
 
@@ -69,8 +92,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         this.menu = menu;
-        //im putting it here to see if this fixes the error
-        //downloads the topics from the news api source
         NewsDownloaderSource.NewsDownloaderTopics(this);
 
         return super.onCreateOptionsMenu(menu);
@@ -81,18 +102,35 @@ public class MainActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         //this is for the drawer only
         if (mDrawerToggle.onOptionsItemSelected(item)) {
-            Log.d(TAG, "onOptionsItemSelected: mDrawerToggle " + item);
             return true;
         }
 
-        //for dynamic menu with submenus
-        if (item.hasSubMenu())
-            return true;
-
-        //int parentSubmenu = item.getGroupId();
-        //int menuItem = item.getItemId();
+        //this hopefully will loop thru the menu items on the list and select the item that matches
+        //the item that was clicked
+        for (int i = 0; i < menu.size(); i++){
+            if(menu.getItem(i).getTitle().equals(item.getTitle())){
+                reloadSources(topics.get(i));
+                break;
+            }
+        }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    private void reloadSources(String s) {
+        current_items.clear();
+        if(s.equals("All")){
+            current_items.addAll(all_items);
+        }
+        else{
+            for(int i = 0; i < all_items.size(); i++){
+                if(all_items.get(i).getCategory().equals(s)){
+                    current_items.add(all_items.get(i));
+                }
+            }
+        }
+        changeTitle(current_items.size());
+        loadDrawer(false);
     }
 
     //this method makes the menu
@@ -113,6 +151,13 @@ public class MainActivity extends AppCompatActivity {
         //adds the topics to the menu
         for(int i = 0; i < topics.size(); i++){
             menu.add( topics.get(i) );
+            if(i > 0){
+                int newind = i-1;
+                MenuItem item = menu.getItem(i);
+                SpannableString spanString = new SpannableString(item.getTitle().toString());
+                spanString.setSpan(new ForegroundColorSpan(Color.parseColor(colors[newind])), 0, spanString.length(), 0); // fix the color to white
+                item.setTitle(spanString);
+            }
         }
         hideKeyboard();
     }
@@ -147,9 +192,14 @@ public class MainActivity extends AppCompatActivity {
         mDrawerToggle.onConfigurationChanged(newConfig); // <== IMPORTANT
     }
 
-
+    @SuppressLint("NotifyDataSetChanged")
     private void selectItem(int position) {
-        //textView.setText(String.format(Locale.getDefault(),"You picked %s", items[position]));
+        viewPager.setBackground(null);
+        //grab the title
+        currentTitle = current_items.get(position).getName();
+        NewsDownloaderArticle news2 = new NewsDownloaderArticle(this, current_items.get(position).getId());
+        new Thread(news2).start();
+
         mDrawerLayout.closeDrawer(mDrawerList);
     }
 
@@ -167,9 +217,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
     //reloads the drawer when the information is pulled from the API
-    public void loadDrawer(){
+    public void loadDrawer(boolean all){
+        //will just load all the items if the user wants to load all the items
+        if(all){
+            current_items.addAll(all_items);
+        }
         mDrawerList.setAdapter(new ArrayAdapter<>(this,   // <== Important!
-                R.layout.drawer_layout_item, items));
+                R.layout.drawer_layout_item, current_items));
+        mDrawerLayout.setScrimColor(Color.WHITE);
     }
 
     //changes the title of the activity once the information is loaded in
@@ -179,5 +234,23 @@ public class MainActivity extends AppCompatActivity {
                 .append(" (").append(num)
                 .append(")").toString();
         setTitle(temp);
+    }
+    //changes the title when the user pulls up a view page
+    public void changeTitle(String title){
+        setTitle(title);
+    }
+
+    private boolean hasInternet() {
+        ConnectivityManager connectivityManager = getSystemService(ConnectivityManager.class);
+        NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
+        return (networkInfo != null && networkInfo.isConnectedOrConnecting());
+    }
+
+    public void addArticle(ArrayList<Article> w) {
+            article.clear();
+            article.addAll(w);
+            artadap.notifyDataSetChanged();
+            setTitle(currentTitle);
+            viewPager.setCurrentItem(0);
     }
 }

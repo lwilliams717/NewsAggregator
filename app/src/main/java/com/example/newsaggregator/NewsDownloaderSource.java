@@ -26,22 +26,25 @@ public class NewsDownloaderSource {
     private static final String newsLink = "https://newsapi.org/v2/sources?apiKey=";
     private static final String newsHeadline = "https://newsapi.org/v2/top-headlines?sources=";
     private static final String getNewsHeadline_end = "&apiKey=";
+    private static boolean all = false;
 
     public static void NewsDownloader(MainActivity main, String source){
         mainActivity = main;
         queue = Volley.newRequestQueue(mainActivity);
-        newspaper = source;
+        if(source.equals("All")){
+            all = true;
+        }
+        else{
+            newspaper = source;
+        }
 
-        //!!!!!!!!!!!!!!!!
-        //set the url here
-        //this is the url that will get the news sources!!!
-        //!!!!!!!!!!!!!!!!
+        urlToUse = newsLink + yourAPIKey;
 
         Response.Listener<JSONObject> listener =
                 response -> parseJSON_Main(response.toString());
 
         Response.ErrorListener error =
-                error1 -> mainActivity.updateData(null);
+                error1 -> mainActivity.ErrorDownload();
 
         // Request a string response from the provided URL.
         JsonObjectRequest jsonObjectRequest =
@@ -59,6 +62,8 @@ public class NewsDownloaderSource {
         queue.add(jsonObjectRequest);
     }
 
+    //downloader specifically searches for all topics and loads in the dynamic menu
+    //only called at the beginning
     public static void NewsDownloaderTopics(MainActivity main){
         mainActivity = main;
         queue = Volley.newRequestQueue(mainActivity);
@@ -87,7 +92,38 @@ public class NewsDownloaderSource {
         queue.add(jsonObjectRequest);
     }
 
+    //this one find a specific sources based on a selected topic
     private static void parseJSON_Main(String s) {
+        try {
+            MainActivity.current_items.clear();
+            JSONObject jMain = new JSONObject(s);
+            //sources is an array
+            JSONArray sources = jMain.getJSONArray("sources");
+            //loops thru each source
+            for(int i = 0; i < sources.length(); i++) {
+                //grab the json objects
+                JSONObject specificSource = sources.getJSONObject(i);
+                //gets the name category and link
+                String id = specificSource.getString("id");
+                String name = specificSource.getString("name");
+                String topic = specificSource.getString("category");
+                String url = specificSource.getString("url");
+
+                //adds the news source to item array for the drawer ONLY if the category matches
+                if(all){
+                    MainActivity.current_items.add(new NewsSource(id, name, topic, url));
+                }
+                else if(topic.equals(newspaper)) {
+                    MainActivity.current_items.add(new NewsSource(id, name, topic, url));
+                }
+
+            }
+            mainActivity.loadDrawer(false);
+            mainActivity.changeTitle(MainActivity.current_items.size());
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     //method goes thru all the sources to find topics to add to the menu
@@ -104,17 +140,18 @@ public class NewsDownloaderSource {
                 //grab the json objects
                 JSONObject specificSource = sources.getJSONObject(i);
                 //gets the name category and link
+                String id = specificSource.getString("id");
                 String name = specificSource.getString("name");
                 String topic = specificSource.getString("category");
                 String url = specificSource.getString("url");
 
                 //adds the news source to item array for the drawer
-                MainActivity.items.add(new NewsSource(name, topic, url));
+                MainActivity.all_items.add(new NewsSource(id, name, topic, url));
 
                 //adds category to topic array for the menu
                 MainActivity.addTopic(topic);
             }
-            mainActivity.loadDrawer();
+            mainActivity.loadDrawer(true);
             mainActivity.makeMenu();
             mainActivity.changeTitle(sources.length());
 
