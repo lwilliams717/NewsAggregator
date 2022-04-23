@@ -20,6 +20,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.SubMenu;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
@@ -28,6 +29,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Locale;
 import java.util.Set;
@@ -47,9 +49,11 @@ public class MainActivity extends AppCompatActivity {
     private ArticleAdapter artadap;
     static final ArrayList<String> topics = new ArrayList<>();
     private  ArrayList<Article> article = new ArrayList<>();
-    private String [] colors = {"#ad152e", "#d68c45", "#f4d35e", "#60785c", "#77a0a9", "#6c596e", "#ff8c9f"};
+    private String [] colors = {"#ad152e", "#d68c45", "#8c8307", "#60785c", "#1f5a61", "#6c596e", "#ff8c9f"};
+    static HashMap<String, String> topic_color = new HashMap<String, String>();
     String currentTitle;
     boolean network;
+    int i = 0;
 
 
     @Override
@@ -61,9 +65,21 @@ public class MainActivity extends AppCompatActivity {
         mDrawerList = findViewById(R.id.drawer_list); // <== Important!
         network = hasInternet();
 
+        ArrayAdapter<NewsSource> adapter=new ArrayAdapter<NewsSource>(this, R.layout.drawer_layout_item, current_items){
+            @Override
+            public View getView(int position, View convertView, ViewGroup parent) {
+                View view =super.getView(position, convertView, parent);
 
-        mDrawerList.setAdapter(new ArrayAdapter<>(this,   // <== Important!
-                R.layout.drawer_layout_item, all_items));
+                textView=(TextView) view.findViewById(android.R.id.text1);
+
+                /*YOUR CHOICE OF COLOR*/
+                textView.setTextColor(Color.BLUE);
+
+                return view;
+            }
+        };
+
+        mDrawerList.setAdapter(adapter);
 
         mDrawerList.setOnItemClickListener(
                 (parent, view, position, id) -> {
@@ -167,6 +183,7 @@ public class MainActivity extends AppCompatActivity {
                 item.setTitle(spanString);
             }
         }
+        createHashMap();
         hideKeyboard();
     }
     //helper method to hide keyboard
@@ -232,13 +249,14 @@ public class MainActivity extends AppCompatActivity {
 
     //reloads the drawer when the information is pulled from the API
     public void loadDrawer(boolean all){
+        readaptDrawer(all);
         //will just load all the items if the user wants to load all the items
-        if(all){
-            current_items.addAll(all_items);
-        }
-        mDrawerList.setAdapter(new ArrayAdapter<>(this,   // <== Important!
-                R.layout.drawer_layout_item, current_items));
-        mDrawerLayout.setScrimColor(Color.WHITE);
+        //if(all){
+          //  current_items.addAll(all_items);
+        //}
+        //mDrawerList.setAdapter(new ArrayAdapter<>(this,   // <== Important!
+                //R.layout.drawer_layout_item, current_items));
+        //mDrawerLayout.setScrimColor(Color.WHITE);
     }
 
     //changes the title of the activity once the information is loaded in
@@ -268,5 +286,36 @@ public class MainActivity extends AppCompatActivity {
             artadap.notifyDataSetChanged();
             setTitle(currentTitle);
             viewPager.setCurrentItem(0);
+    }
+
+    public void createHashMap(){
+        for (int i = 1; i < menu.size(); i++){
+            topic_color.put(menu.getItem(i).getTitle().toString(), colors[i-1]);
+        }
+    }
+
+    public void readaptDrawer(boolean all){
+        if(all){
+            current_items.addAll(all_items);
+        }
+        ArrayAdapter<NewsSource> adapter = null;
+            adapter = new ArrayAdapter<NewsSource>(this, R.layout.drawer_layout_item, current_items){
+            @Override
+            public View getView(int position, View convertView, ViewGroup parent) {
+                View view = super.getView(position, convertView, parent);
+
+                textView=(TextView) view.findViewById(android.R.id.text1);
+                if(i < current_items.size()){
+                    String category = current_items.get(i).getCategory();
+                    textView.setTextColor( Color.parseColor( topic_color.get(category) ) );
+                    i++;
+                }
+                else{
+                    i = 0;
+                }
+                return view;
+            }
+        };
+        mDrawerList.setAdapter(adapter);
     }
 }
