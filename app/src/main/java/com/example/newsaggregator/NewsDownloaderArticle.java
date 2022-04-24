@@ -30,7 +30,7 @@ public class NewsDownloaderArticle implements Runnable {
     private static RequestQueue queue;
     private static String newspaper;
     private static String urlToUse;
-    private static final String yourAPIKey = "&apiKey=1638c37da51d499aae182fec6a6ed8ff";
+    private static final String yourAPIKey = "&apiKey=810dcf333dbe462283464e599d59d31d";
     private static final String urlFirst = "https://newsapi.org/v2/top-headlines?sources=" ;
 
     NewsDownloaderArticle(MainActivity main, String newsSource) {
@@ -89,7 +89,7 @@ public class NewsDownloaderArticle implements Runnable {
                 //this is to get the news name
                 JSONObject source = (JSONObject) specific_article.getJSONObject("source");
                 String newsName = source.getString("name");
-
+                String newsId = source.getString("id");
                 //grabs the article and pulls all the information from it
                 String author = specific_article.getString("author");
 
@@ -105,7 +105,7 @@ public class NewsDownloaderArticle implements Runnable {
 
                 String content = specific_article.getString("content");
 
-                Article article = new Article(author,title,description,url,urlToImage,publishedAt,content, newsName);
+                Article article = new Article(author,title,description,url,urlToImage,publishedAt,content, newsName, newsId);
                 articles.add(article);
             }
 

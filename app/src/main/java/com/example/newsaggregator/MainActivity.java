@@ -30,6 +30,7 @@ import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Locale;
 import java.util.Set;
@@ -43,19 +44,20 @@ public class MainActivity extends AppCompatActivity {
     private TextView textView;
     private ViewPager2 viewPager;
     private ActionBarDrawerToggle mDrawerToggle;
-    static final ArrayList<NewsSource> all_items = new ArrayList<>();
-    static final ArrayList<NewsSource> current_items = new ArrayList<>();
+    static volatile ArrayList<NewsSource> all_items = new ArrayList<>();
+    static volatile ArrayList<NewsSource> current_items = new ArrayList<>();
     private Menu menu;
     private ArticleAdapter artadap;
     static final ArrayList<String> topics = new ArrayList<>();
-    private  ArrayList<Article> article = new ArrayList<>();
+    static private volatile ArrayList<Article> article = new ArrayList<>();
     private String [] colors = {"#ad152e", "#d68c45", "#8c8307", "#60785c", "#1f5a61", "#6c596e", "#ff8c9f"};
     static HashMap<String, String> topic_color = new HashMap<String, String>();
     String currentTitle;
+    static volatile String loadedTitle;
     boolean network;
     int currentPage = 0;
     int newsSelected = 0;
-    boolean load = false;
+
 
 
     @Override
@@ -100,8 +102,8 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         this.menu = menu;
-        if (network){
-            NewsDownloaderSource.NewsDownloaderTopics(this);
+        if (hasInternet()){
+                NewsDownloaderSource.NewsDownloaderTopics(this);
         }
         else{
             ErrorNetwork();
@@ -142,6 +144,7 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         }
+
         changeTitle(current_items.size());
         loadDrawer(false);
     }
@@ -151,9 +154,7 @@ public class MainActivity extends AppCompatActivity {
     public void makeMenu() {
         menu.clear();
         // Add the elements to set
-        topics.size();
         Set<String> set = new LinkedHashSet<String>();
-
         set.addAll(topics);
         // Clear the list
         topics.clear();
@@ -207,13 +208,15 @@ public class MainActivity extends AppCompatActivity {
 
     @SuppressLint("NotifyDataSetChanged")
     private void selectItem(int position) {
-        if(network){
+        if(hasInternet()){
             newsSelected = position;
             viewPager.setBackground(null);
             //grab the title
-            currentTitle = current_items.get(position).getName();
             NewsDownloaderArticle news2 = new NewsDownloaderArticle(this, current_items.get(position).getId());
             new Thread(news2).start();
+
+            currentTitle = current_items.get(position).getName();
+            changeTitle(currentTitle);
         }
         else{
             ErrorNetwork();
@@ -243,17 +246,17 @@ public class MainActivity extends AppCompatActivity {
 
     //changes the title of the activity once the information is loaded in
     //this method is specifically for when the number of topics have been created
-    public void changeTitle(int num){
-        String temp = new StringBuilder()
-                .append(getString(R.string.app_name))
-                .append(" (").append(num)
-                .append(")").toString();
-        setTitle(temp);
+     public void changeTitle(int num){
+            currentTitle = new StringBuilder()
+                    .append(getString(R.string.app_name))
+                    .append(" (").append(num)
+                    .append(")").toString();
+        setTitle(currentTitle);
     }
 
     //changes the title when the user pulls up a view page
     //this changes the name to the publication in use
-    public void changeTitle(String title){
+     public void changeTitle(String title){
         setTitle(title);
     }
 
@@ -269,11 +272,12 @@ public class MainActivity extends AppCompatActivity {
             artadap.notifyDataSetChanged();
             setTitle(currentTitle);
             //this just makes sure the app is not trying to load a saved page
-            if(!load){
+            if(loadedTitle == null){
                 viewPager.setCurrentItem(0);
             }else{
                 //this is if the user needs to load a saved page
                 viewPager.setCurrentItem(currentPage);
+                //loadedTitle = null;
             }
     }
 
@@ -284,7 +288,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void readaptDrawer(boolean all){
+        while(all_items.size() > 128){
+            all_items.remove( all_items.size()-1 );
+        }
         if(all){
+            current_items.clear();
             current_items.addAll(all_items);
         }
         ArrayAdapter<NewsSource> adapter = null;
@@ -303,25 +311,35 @@ public class MainActivity extends AppCompatActivity {
     //need to make sure the activity doesnt lose the information when it's destroyed by rotating
     @Override
     protected void onSaveInstanceState(Bundle outState) {
-        outState.putInt( "currentPage" , viewPager.getCurrentItem() );
-        outState.putString( "newsSource", article.get(viewPager.getCurrentItem()).getNewsName() );
+        if(article.size() > 0) {
+            outState.putInt("currentPage", viewPager.getCurrentItem());
+            outState.putString("newsSource", article.get(viewPager.getCurrentItem()).getNewsId());
+            outState.putBoolean("load", true);
+        }else{
+            outState.putBoolean("load", false);
+        }
         super.onSaveInstanceState(outState);
     }
 
     @Override
     protected void onRestoreInstanceState(@NonNull Bundle savedInstanceState) {
         // Call super first
-        load = true;
-        currentPage = savedInstanceState.getInt("currentPage");
-        String news = savedInstanceState.getString("newSource");
-        int i;
-        for(i = 0; i < all_items.size(); i++){
-            if(all_items.get(i).getName().equals(news)){
-                newsSelected = i;
+        if( savedInstanceState.getBoolean("load") ){
+            currentPage = savedInstanceState.getInt("currentPage");
+            String news = savedInstanceState.getString("newsSource");
+            int i;
+            for (i = 0; i < current_items.size(); i++) {
+                if (current_items.get(i).getId().equals(news)) {
+                    newsSelected = i;
+                    Log.d(TAG, "onRestoreInstanceState: ");
+                    break;
+                }
             }
+            loadedTitle = current_items.get(newsSelected).getName();
+            currentTitle = loadedTitle;
+            selectItem(newsSelected);
         }
-        selectItem(newsSelected);
-        currentTitle = current_items.get(newsSelected).getName();
+
         super.onRestoreInstanceState(savedInstanceState);
     }
 }

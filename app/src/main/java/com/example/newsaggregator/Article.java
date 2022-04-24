@@ -9,6 +9,7 @@ import java.time.format.DateTimeFormatter;
 
 public class Article {
     private final String newsName;
+    private final String id;
     private String author;
     private String title;
     private String desc;
@@ -17,8 +18,9 @@ public class Article {
     private String date;
     private String content;
 
-    public Article(String a, String t, String d, String url, String url_i, String date, String c, String newsName){
+    public Article(String a, String t, String d, String url, String url_i, String date, String c, String newsName, String id){
         this.newsName = newsName;
+        this.id = id;
         setAuthor(a);
         setTitle(t);
         setDesc(d);
@@ -125,6 +127,9 @@ public class Article {
         return newsName;
     }
 
+    public String getNewsId(){
+        return id;
+    }
 
     @Override
     public String toString() {

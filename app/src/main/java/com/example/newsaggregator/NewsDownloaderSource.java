@@ -22,7 +22,7 @@ public class NewsDownloaderSource {
     private static RequestQueue queue;
     private static String newspaper;
     private static String urlToUse;
-    private static final String yourAPIKey = "1638c37da51d499aae182fec6a6ed8ff";
+    private static final String yourAPIKey = "810dcf333dbe462283464e599d59d31d";
     private static final String newsLink = "https://newsapi.org/v2/sources?apiKey=";
     private static final String newsHeadline = "https://newsapi.org/v2/top-headlines?sources=";
     private static final String getNewsHeadline_end = "&apiKey=";
@@ -119,8 +119,6 @@ public class NewsDownloaderSource {
 
             }
             mainActivity.loadDrawer(false);
-            mainActivity.changeTitle(MainActivity.current_items.size());
-
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -153,7 +151,13 @@ public class NewsDownloaderSource {
             }
             mainActivity.loadDrawer(true);
             mainActivity.makeMenu();
-            mainActivity.changeTitle(sources.length());
+            if(MainActivity.loadedTitle == null){
+                mainActivity.changeTitle(sources.length());
+            }
+            else{
+                Log.d(TAG, "parseTopics: " + MainActivity.current_items.size());
+                mainActivity.changeTitle(MainActivity.loadedTitle);
+            }
 
         } catch (Exception e) {
             e.printStackTrace();
