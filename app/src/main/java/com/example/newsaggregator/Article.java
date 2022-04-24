@@ -121,6 +121,10 @@ public class Article {
         }
     }
 
+    public String getNewsName(){
+        return newsName;
+    }
+
 
     @Override
     public String toString() {

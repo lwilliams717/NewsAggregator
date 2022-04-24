@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#D5B9B2">
+    android:background="@color/pink_beige">
 
     <TextView
         android:id="@+id/article_title"
@@ -25,7 +25,7 @@
         android:id="@+id/article_date"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="43dp"
+        android:layout_marginStart="30dp"
         android:layout_marginTop="15dp"
         android:text="TextView"
         android:textColor="@color/brown"
@@ -46,13 +46,11 @@
 
     <ImageView
         android:id="@+id/article_image"
-        android:layout_width="360dp"
-        android:layout_height="212dp"
-        android:layout_marginStart="23dp"
+        android:layout_width="325dp"
+        android:layout_height="183dp"
         android:layout_marginTop="10dp"
         android:layout_marginEnd="23dp"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/article_author"
         tools:srcCompat="@tools:sample/avatars" />
 
@@ -60,26 +58,27 @@
         android:id="@+id/article_number"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="20dp"
+        android:layout_marginBottom="16dp"
         android:text="1 out of 10"
         android:textColor="@color/brown"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/article_image"
         app:layout_constraintStart_toStartOf="parent" />
 
     <TextView
         android:id="@+id/article_text"
         android:layout_width="0dp"
-        android:layout_height="75dp"
-        android:layout_marginStart="23dp"
-        android:layout_marginTop="20dp"
-        android:layout_marginEnd="23dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="30dp"
+        android:layout_marginTop="24dp"
+        android:layout_marginEnd="30dp"
         android:background="#B0ECE2D0"
         android:text="TextView"
         android:textSize="16sp"
         android:padding="5dp"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/article_image"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/article_image" />
+        app:layout_constraintTop_toBottomOf="@+id/article_author" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

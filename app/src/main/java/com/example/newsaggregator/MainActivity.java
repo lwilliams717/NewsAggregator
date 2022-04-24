@@ -53,7 +53,9 @@ public class MainActivity extends AppCompatActivity {
     static HashMap<String, String> topic_color = new HashMap<String, String>();
     String currentTitle;
     boolean network;
-    int i = 0;
+    int currentPage = 0;
+    int newsSelected = 0;
+    boolean load = false;
 
 
     @Override
@@ -65,20 +67,7 @@ public class MainActivity extends AppCompatActivity {
         mDrawerList = findViewById(R.id.drawer_list); // <== Important!
         network = hasInternet();
 
-        ArrayAdapter<NewsSource> adapter=new ArrayAdapter<NewsSource>(this, R.layout.drawer_layout_item, current_items){
-            @Override
-            public View getView(int position, View convertView, ViewGroup parent) {
-                View view =super.getView(position, convertView, parent);
-
-                textView=(TextView) view.findViewById(android.R.id.text1);
-
-                /*YOUR CHOICE OF COLOR*/
-                textView.setTextColor(Color.BLUE);
-
-                return view;
-            }
-        };
-
+        ArrayAdapter<NewsSource> adapter=new ArrayAdapter<NewsSource>(this, R.layout.drawer_layout_item, current_items);
         mDrawerList.setAdapter(adapter);
 
         mDrawerList.setOnItemClickListener(
@@ -163,7 +152,6 @@ public class MainActivity extends AppCompatActivity {
         menu.clear();
         // Add the elements to set
         topics.size();
-
         Set<String> set = new LinkedHashSet<String>();
 
         set.addAll(topics);
@@ -220,6 +208,7 @@ public class MainActivity extends AppCompatActivity {
     @SuppressLint("NotifyDataSetChanged")
     private void selectItem(int position) {
         if(network){
+            newsSelected = position;
             viewPager.setBackground(null);
             //grab the title
             currentTitle = current_items.get(position).getName();
@@ -250,13 +239,6 @@ public class MainActivity extends AppCompatActivity {
     //reloads the drawer when the information is pulled from the API
     public void loadDrawer(boolean all){
         readaptDrawer(all);
-        //will just load all the items if the user wants to load all the items
-        //if(all){
-          //  current_items.addAll(all_items);
-        //}
-        //mDrawerList.setAdapter(new ArrayAdapter<>(this,   // <== Important!
-                //R.layout.drawer_layout_item, current_items));
-        //mDrawerLayout.setScrimColor(Color.WHITE);
     }
 
     //changes the title of the activity once the information is loaded in
@@ -268,6 +250,7 @@ public class MainActivity extends AppCompatActivity {
                 .append(")").toString();
         setTitle(temp);
     }
+
     //changes the title when the user pulls up a view page
     //this changes the name to the publication in use
     public void changeTitle(String title){
@@ -285,7 +268,13 @@ public class MainActivity extends AppCompatActivity {
             article.addAll(w);
             artadap.notifyDataSetChanged();
             setTitle(currentTitle);
-            viewPager.setCurrentItem(0);
+            //this just makes sure the app is not trying to load a saved page
+            if(!load){
+                viewPager.setCurrentItem(0);
+            }else{
+                //this is if the user needs to load a saved page
+                viewPager.setCurrentItem(currentPage);
+            }
     }
 
     public void createHashMap(){
@@ -303,19 +292,36 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public View getView(int position, View convertView, ViewGroup parent) {
                 View view = super.getView(position, convertView, parent);
-
                 textView=(TextView) view.findViewById(android.R.id.text1);
-                if(i < current_items.size()){
-                    String category = current_items.get(i).getCategory();
+                    String category = current_items.get(position).getCategory();
                     textView.setTextColor( Color.parseColor( topic_color.get(category) ) );
-                    i++;
-                }
-                else{
-                    i = 0;
-                }
                 return view;
             }
         };
         mDrawerList.setAdapter(adapter);
+    }
+    //need to make sure the activity doesnt lose the information when it's destroyed by rotating
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        outState.putInt( "currentPage" , viewPager.getCurrentItem() );
+        outState.putString( "newsSource", article.get(viewPager.getCurrentItem()).getNewsName() );
+        super.onSaveInstanceState(outState);
+    }
+
+    @Override
+    protected void onRestoreInstanceState(@NonNull Bundle savedInstanceState) {
+        // Call super first
+        load = true;
+        currentPage = savedInstanceState.getInt("currentPage");
+        String news = savedInstanceState.getString("newSource");
+        int i;
+        for(i = 0; i < all_items.size(); i++){
+            if(all_items.get(i).getName().equals(news)){
+                newsSelected = i;
+            }
+        }
+        selectItem(newsSelected);
+        currentTitle = current_items.get(newsSelected).getName();
+        super.onRestoreInstanceState(savedInstanceState);
     }
 }
